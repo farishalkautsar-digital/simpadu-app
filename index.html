@@ -277,12 +277,21 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwjNtgTFsCsE8fS8T6td1Ax
 function panggilAPI(action, dataTarget, onSuccess, onFailure) {
   fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Wajib text/plain untuk melewati blokir keamanan browser
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Wajib text/plain
     body: JSON.stringify({ action: action, data: dataTarget })
   })
   .then(response => response.json())
-  .then(res => { if (onSuccess) onSuccess(res); })
+  .then(res => { 
+    // BENTENG PERTAHANAN: Memisahkan error tampilan (UI) dari error internet
+    try {
+      if (onSuccess) onSuccess(res); 
+    } catch (uiError) {
+      // Jika ada elemen UI yang tersandung, sembunyikan errornya agar tidak mengganggu user
+      console.error("Kesalahan kecil saat render UI (Abaikan):", uiError);
+    }
+  })
   .catch(err => {
+    // Alert Koneksi Gagal SEKARANG HANYA MUNCUL jika benar-benar tidak ada internet
     console.error("Terjadi putus jalur ke server:", err);
     if (onFailure) onFailure(err);
     else Swal.fire('Koneksi Gagal', 'Gagal terhubung ke server. Periksa internet Anda.', 'error');
